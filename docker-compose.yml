@@ -1,0 +1,73 @@
+﻿# ==============================================================================
+# Municipal Solid Waste Monitoring Platform
+# Local Production Simulation Environment (Docker Compose)
+#
+# Services:
+#   - postgres: Local simulation of municipal PostgreSQL database
+#   - app: Containerized backend monitoring service running against PostgreSQL
+#
+# NOTE: This compose file is for local development / CI simulation only.
+# It does NOT represent real municipal production infrastructure or cloud setups.
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # Local Production Simulation Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: municipal_waste_postgres_sim
+    environment:
+      POSTGRES_USER: municipal_sim_user
+      POSTGRES_PASSWORD: municipal_sim_password_2026
+      POSTGRES_DB: municipal_waste_db
+    ports:
+      # Expose locally for developer diagnostics only
+      - 127.0.0.1:5432:5432
+    volumes:
+      - postgres_data_sim:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U municipal_sim_user -d municipal_waste_db]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Municipal Waste Monitoring Backend Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: municipal_waste_app_sim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DB_CLIENT: postgres
+      DATABASE_URL: postgresql://municipal_sim_user:municipal_sim_password_2026@postgres:5432/municipal_waste_db
+      JWT_SECRET: local_simulation_jwt_secret_must_be_over_32_characters_long
+      WEBHOOK_HMAC_SECRET: local_simulation_hmac_secret_must_be_over_32_characters_long
+      CORS_ORIGIN: *
+      LOG_LEVEL: info
+      DB_POOL_MIN: 2
+      DB_POOL_MAX: 10
+      RATE_LIMIT_ENABLED: true
+      RATE_LIMIT_MAX: 100
+      RATE_LIMIT_WINDOW_MS: 60000
+      HSTS_ENABLED: false # Disabled for HTTP local container simulation
+    ports:
+      - 3000:3000
+    healthcheck:
+      test: [CMD, wget, --no-verbose, --tries=1, --spider, http://127.0.0.1:3000/healthz]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data_sim:
+    name: municipal_waste_postgres_data_sim

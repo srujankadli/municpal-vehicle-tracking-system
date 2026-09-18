@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Municipal Solid Waste Collection Monitoring Subsystem</title>
+    <!-- Anti-FOUC Theme and Locale Initialization Script -->
+    <script>
+      (function() {
+        try {
+          // 1. Theme Initialization (Default: LIGHT)
+          var savedTheme = localStorage.getItem('municipal_ui_theme') || 'light';
+          var activeTheme = savedTheme;
+          if (savedTheme === 'system') {
+            activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', activeTheme);
+          var metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+          if (metaColorScheme) {
+            metaColorScheme.content = activeTheme === 'dark' ? 'dark' : 'light';
+          }
+
+          // 2. Locale Initialization (Default: en)
+          var savedLocale = localStorage.getItem('municipal_ui_locale') || 'en';
+          document.documentElement.setAttribute('lang', savedLocale);
+        } catch (e) {
+          // Fallback to light and en
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.setAttribute('lang', 'en');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

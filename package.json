@@ -1,0 +1,53 @@
+{
+  "name": "municipal-waste-monitoring",
+  "version": "1.0.0",
+  "description": "Government-facing municipal solid waste collection monitoring, verification & audit system",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "tsc",
+    "build:frontend": "vite build",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "dev:frontend": "vite",
+    "migrate": "tsx src/db/migrate.ts",
+    "seed": "tsx src/db/seed.ts",
+    "test:backend": "tsx --test --test-concurrency=1 tests/**/*.test.ts",
+    "test:frontend": "tsx --test frontend/tests/**/*.test.ts",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "keywords": [
+    "municipal",
+    "solid-waste",
+    "audit",
+    "verification",
+    "reconciliation"
+  ],
+  "author": "Municipal Enterprise Systems",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/rate-limit": "^11.2.0",
+    "@types/leaflet": "^1.9.22",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.46.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "playwright": "^1.63.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^8.3.0"
+  }
+}

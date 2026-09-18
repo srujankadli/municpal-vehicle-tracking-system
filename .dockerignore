@@ -1,0 +1,39 @@
+﻿# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment and Secrets (CRITICAL SECURITY)
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases and runtime data
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Test coverage and artifacts
+coverage/
+.nyc_output/
+
+# Build artifacts
+dist/
+dist-frontend/
+
+# Version control and IDE metadata
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary and log files
+*.log
+scratch/

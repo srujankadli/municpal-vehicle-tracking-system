@@ -1,0 +1,252 @@
+/* ==========================================================================
+   URBAN CIVIC / SMART MUNICIPALITY DESIGN TOKENS
+   Strict Municipal Aesthetic - Light Default, Urban Night Dark Mode
+   ========================================================================== */
+
+:root {
+  /* Font Families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Devanagari', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+
+  /* Spacing */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+
+  /* Radii - Civic & Restrained */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Focus Outline */
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
+
+  /* Layout Widths */
+  --max-width-page: 1360px;
+}
+
+/* ==========================================================================
+   1. LIGHT THEME (DEFAULT)
+   ========================================================================== */
+html[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-bg: #f8fafc;              /* Slate 50 */
+  --color-surface: #ffffff;         /* Crisp White */
+  --color-surface-raised: #ffffff;
+  --color-surface-subtle: #f1f5f9;  /* Slate 100 */
+  --color-surface-hover: #f8fafc;
+
+  /* Structural Borders */
+  --color-border: #cbd5e1;          /* Slate 300 */
+  --color-border-subtle: #e2e8f0;   /* Slate 200 */
+  --color-border-strong: #94a3b8;   /* Slate 400 */
+
+  /* Typography */
+  --color-text-primary: #0f172a;    /* Slate 900 */
+  --color-text-secondary: #334155;  /* Slate 700 */
+  --color-text-muted: #64748b;      /* Slate 500 */
+  --color-text-inverted: #ffffff;
+
+  /* Civic Brand Colors */
+  --color-primary: #1e40af;         /* Deep Municipal Blue 800 */
+  --color-primary-hover: #1d4ed8;   /* Blue 700 */
+  --color-primary-active: #1e3a8a;  /* Blue 900 */
+  --color-primary-subtle: #eff6ff;  /* Blue 50 */
+  --color-primary-border: #bfdbfe;  /* Blue 200 */
+  --color-primary-foreground: #ffffff;
+
+  /* Semantic Status Tokens (Accessible Contrast) */
+  --color-success: #15803d;         /* Green 700 */
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
+
+  --color-warning: #b45309;         /* Amber 700 */
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #b91c1c;          /* Red 700 */
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #0369a1;            /* Sky 700 */
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  --color-disputed: #7e22ce;        /* Purple 700 */
+  --color-disputed-bg: #faf5ff;
+  --color-disputed-border: #e9d5ff;
+
+  --color-neutral: #475569;         /* Slate 600 */
+  --color-neutral-bg: #f1f5f9;
+  --color-neutral-border: #cbd5e1;
+
+  /* Demo Environment Banner */
+  --color-demo-banner-bg: #fef3c7;   /* Amber 100 */
+  --color-demo-banner-border: #f59e0b; /* Amber 500 */
+  --color-demo-banner-text: #92400e;   /* Amber 800 */
+
+  /* Shadows - Subtle and Civic */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+}
+
+/* ==========================================================================
+   2. DARK THEME (URBAN NIGHT / MUNICIPAL OPERATIONS)
+   No Cosmic / Space / AI Tropes - Restrained Operational Slate & Charcoal
+   ========================================================================== */
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-bg: #0b1120;              /* Very Dark Slate Navy */
+  --color-surface: #111827;         /* Gray 900 */
+  --color-surface-raised: #1f2937;  /* Gray 800 */
+  --color-surface-subtle: #1e293b;  /* Slate 800 */
+  --color-surface-hover: #26334d;
+
+  /* Structural Borders */
+  --color-border: #374151;          /* Gray 700 */
+  --color-border-subtle: #2d3748;
+  --color-border-strong: #4b5563;   /* Gray 600 */
+
+  /* Typography */
+  --color-text-primary: #f8fafc;    /* Slate 50 */
+  --color-text-secondary: #cbd5e1;  /* Slate 300 */
+  --color-text-muted: #94a3b8;      /* Slate 400 */
+  --color-text-inverted: #0f172a;
+
+  /* Civic Brand Colors */
+  --color-primary: #3b82f6;         /* Clear Blue 500 */
+  --color-primary-hover: #60a5fa;   /* Blue 400 */
+  --color-primary-active: #2563eb;  /* Blue 600 */
+  --color-primary-subtle: #1e293b;
+  --color-primary-border: #2563eb;
+  --color-primary-foreground: #ffffff;
+
+  /* Semantic Status Tokens (Dark Mode) */
+  --color-success: #34d399;         /* Emerald 400 */
+  --color-success-bg: #064e3b;
+  --color-success-border: #047857;
+
+  --color-warning: #fbbf24;         /* Amber 400 */
+  --color-warning-bg: #78350f;
+  --color-warning-border: #b45309;
+
+  --color-danger: #f87171;          /* Red 400 */
+  --color-danger-bg: #7f1d1d;
+  --color-danger-border: #b91c1c;
+
+  --color-info: #38bdf8;            /* Sky 400 */
+  --color-info-bg: #0c4a6e;
+  --color-info-border: #0284c7;
+
+  --color-disputed: #c084fc;        /* Purple 400 */
+  --color-disputed-bg: #581c87;
+  --color-disputed-border: #7e22ce;
+
+  --color-neutral: #94a3b8;         /* Slate 400 */
+  --color-neutral-bg: #1e293b;
+  --color-neutral-border: #475569;
+
+  /* Demo Environment Banner */
+  --color-demo-banner-bg: #451a03;   /* Amber 950 */
+  --color-demo-banner-border: #d97706; /* Amber 600 */
+  --color-demo-banner-text: #fde68a;   /* Amber 200 */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   GLOBAL RESET & BASE CIVIC STYLES
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Numeric Data Alignment */
+.tabular-nums, table, [data-numeric='true'] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Accessibility Focus Visible */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Common Text Utilities */
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+/* Responsive Table Wrapper */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+/* Civic Leaflet Map Styling */
+.civic-map-container {
+  width: 100%;
+  height: 480px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-subtle);
+  z-index: 1;
+}
+
+html[data-theme='dark'] .civic-map-container .leaflet-tile-pane {
+  filter: brightness(0.75) invert(1) contrast(1.2) hue-rotate(200deg) saturate(0.3);
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-surface) !important;
+}
