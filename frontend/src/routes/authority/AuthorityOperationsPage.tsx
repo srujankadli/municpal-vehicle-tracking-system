@@ -243,7 +243,7 @@ export const AuthorityOperationsPage: React.FC = () => {
             metric={crrMetric}
             description="Matched financial deposits verified against bank statements over total levied billing obligations."
             caveat="Calculated in exact integer paise. Does not account for unbilled commercial waste charges."
-            isCurrency={true}
+            unit="paise"
           />
         </div>
       </div>

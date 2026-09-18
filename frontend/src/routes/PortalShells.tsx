@@ -15,8 +15,8 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('Admin@123456');
+  const [username, setUsername] = useState('commissioner');
+  const [password, setPassword] = useState('commissioner_Pass123!');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -147,9 +147,9 @@ export const LoginPage: React.FC = () => {
             }}
           >
             <p style={{ margin: 0, fontWeight: 600 }}>Demo Seed Credentials:</p>
-            <p style={{ margin: '0.25rem 0 0' }}>Authority Admin: <code>admin</code> / <code>Admin@123456</code></p>
-            <p style={{ margin: '0.25rem 0 0' }}>Field Worker: <code>worker_rajesh</code> / <code>Worker@123456</code></p>
-            <p style={{ margin: '0.25rem 0 0' }}>Citizen: <code>citizen_anita</code> / <code>Citizen@123456</code></p>
+            <p style={{ margin: '0.25rem 0 0' }}>Authority: <code>commissioner</code> / <code>commissioner_Pass123!</code> (Admin: <code>admin</code> / <code>admin_Pass123!</code>)</p>
+            <p style={{ margin: '0.25rem 0 0' }}>Field Worker: <code>worker_suresh</code> / <code>worker_suresh_Pass123!</code></p>
+            <p style={{ margin: '0.25rem 0 0' }}>Citizen: <code>citizen_priya</code> / <code>citizen_priya_Pass123!</code></p>
           </div>
         </form>
       </Panel>

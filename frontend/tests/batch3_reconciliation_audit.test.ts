@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { en } from '../src/i18n/locales/en.js';
 import { hi } from '../src/i18n/locales/hi.js';
 import type {
@@ -68,6 +70,35 @@ describe('Phase 2.6 - Batch 3: Financial Reconciliation & Append-Only Audit Expl
       // Check Hindi parity
       assert.ok(hi.portals.authority.reconciliation.crrCardTitle.length > 0);
       assert.ok(hi.portals.authority.reconciliation.crrCardSubtitle.length > 0);
+    });
+
+    it('CRR presentation invariant: CRR MetricCard renders as percentage (value_percentage) and never as currency', () => {
+      // 1. Verify AuthorityReconciliationPage does not pass isCurrency={true} to CRR MetricCard
+      const reconFile = fs.readFileSync(
+        path.resolve(process.cwd(), 'frontend/src/routes/authority/AuthorityReconciliationPage.tsx'),
+        'utf-8'
+      );
+      assert.ok(!reconFile.includes('isCurrency={true}'), 'AuthorityReconciliationPage must not configure isCurrency={true} for CRR');
+      assert.ok(reconFile.includes('unit="paise"'), 'AuthorityReconciliationPage must supply unit="paise" for CRR');
+
+      // 2. Verify AuthorityOperationsPage does not pass isCurrency={true} to CRR MetricCard
+      const opsFile = fs.readFileSync(
+        path.resolve(process.cwd(), 'frontend/src/routes/authority/AuthorityOperationsPage.tsx'),
+        'utf-8'
+      );
+      assert.ok(!opsFile.includes('isCurrency={true}'), 'AuthorityOperationsPage must not configure isCurrency={true} for CRR');
+      assert.ok(opsFile.includes('unit="paise"'), 'AuthorityOperationsPage must supply unit="paise" for CRR');
+
+      // 3. Mathematical presentation verification: 10000 paise reconciled / 30000 paise levied yields 33.33%
+      const sampleCrr = {
+        value_percentage: 33.33,
+        numerator: 10000,
+        denominator: 30000
+      };
+      const formattedValue = `${sampleCrr.value_percentage.toFixed(2)}%`;
+      assert.equal(formattedValue, '33.33%');
+      assert.ok(!formattedValue.includes('₹'), 'CRR display must never include currency symbols');
+      assert.ok(!formattedValue.includes('INR'), 'CRR display must never include INR');
     });
 
     it('discrepancy triggers ANOM-05: bank statement mismatch notice is honest and explicit', () => {

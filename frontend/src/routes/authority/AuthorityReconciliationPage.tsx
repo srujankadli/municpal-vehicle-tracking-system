@@ -398,7 +398,7 @@ export const AuthorityReconciliationPage: React.FC = () => {
           metric={crrMetric}
           description={t('portals.authority.reconciliation.crrCardSubtitle')}
           caveat={t('portals.authority.reconciliation.crrCardCaveat')}
-          isCurrency={true}
+          unit="paise"
         />
       </div>
 
