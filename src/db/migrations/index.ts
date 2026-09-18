@@ -7,6 +7,7 @@
 
 import type { Migration } from './types.js';
 import { migration_0001 } from './0001_initial_domain_schema.js';
+import { migration_0002 } from './0002_driver_beneficiary_snapshot.js';
 
 export * from './types.js';
 
@@ -14,7 +15,8 @@ export * from './types.js';
  * Authoritative list of migrations in strictly increasing version order.
  */
 export const MIGRATIONS: Migration[] = [
-  migration_0001
+  migration_0001,
+  migration_0002
 ];
 
 /**

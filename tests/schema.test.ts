@@ -51,7 +51,8 @@ describe('Database Schema & Constraint Invariants', () => {
     // Negative paise must fail check constraint
     assert.throws(() => {
       db.prepare(`
-        INSERT INTO payment_obligations VALUES ('ob-01', 'h-01', 'MONTHLY_CONTRIBUTION', -500, '2026-09', 'MUNICIPAL_TREASURY_ACCOUNT', 1, 'src-01', '2026-09-14T00:00:00Z')
+        INSERT INTO payment_obligations (id, household_id, obligation_type, amount_paise, billing_period, beneficiary_model, is_active, source_id, created_at)
+        VALUES ('ob-01', 'h-01', 'MONTHLY_CONTRIBUTION', -500, '2026-09', 'MUNICIPAL_TREASURY_ACCOUNT', 1, 'src-01', '2026-09-14T00:00:00Z')
       `).run();
     }, /CHECK constraint/i);
   });

@@ -32,7 +32,29 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
   }, async (request, reply) => {
     const { household_id } = request.params as { household_id: string };
     const stmt = db.prepare(`
-      SELECT * FROM payment_obligations WHERE household_id = ? AND is_active = 1
+      SELECT 
+        po.id,
+        po.household_id,
+        po.obligation_type,
+        po.amount_paise,
+        po.billing_period,
+        po.beneficiary_model,
+        po.beneficiary_model as beneficiary_type,
+        po.beneficiary_driver_id,
+        po.is_active,
+        po.source_id,
+        po.created_at,
+        w.full_name as beneficiary_driver_name,
+        w.employee_code as beneficiary_driver_code,
+        v.registration_number as assigned_vehicle_reg,
+        r.name as assigned_route_name
+      FROM payment_obligations po
+      LEFT JOIN workers w ON po.beneficiary_driver_id = w.id
+      LEFT JOIN households h ON po.household_id = h.id
+      LEFT JOIN routes r ON h.route_id = r.id
+      LEFT JOIN master_assignments ma ON ma.route_id = r.id AND ma.is_current = 1
+      LEFT JOIN vehicles v ON ma.vehicle_id = v.id
+      WHERE po.household_id = ? AND po.is_active = 1
     `);
     const obligations = stmt.all(household_id);
     return reply.send({ obligations, data_classification: DataClassification.SIMULATED_DEMO_DATA });
@@ -162,9 +184,21 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
   }, async (request, reply) => {
     const { household_id } = request.params as { household_id: string };
     const stmt = db.prepare(`
-      SELECT p.*, r.status as reconciliation_status, r.bank_statement_ref
+      SELECT 
+        p.*,
+        w.full_name as beneficiary_driver_name,
+        w.employee_code as beneficiary_driver_code,
+        v.registration_number as assigned_vehicle_reg,
+        r.name as assigned_route_name,
+        rec.status as reconciliation_status,
+        rec.bank_statement_ref
       FROM resident_payments p
-      LEFT JOIN payment_reconciliations r ON p.id = r.payment_id
+      LEFT JOIN workers w ON p.beneficiary_driver_id = w.id
+      LEFT JOIN households h ON p.household_id = h.id
+      LEFT JOIN routes r ON h.route_id = r.id
+      LEFT JOIN master_assignments ma ON ma.route_id = r.id AND ma.is_current = 1
+      LEFT JOIN vehicles v ON ma.vehicle_id = v.id
+      LEFT JOIN payment_reconciliations rec ON p.id = rec.payment_id
       WHERE p.household_id = ?
       ORDER BY p.initiated_at DESC
     `);

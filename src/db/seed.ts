@@ -329,48 +329,55 @@ export function runSeed(dbInstance?: DatabaseSync): {
 
   // 12. Payment Obligations & Configurable Ledger
   const insertObligationStmt = db.prepare(`
-    INSERT INTO payment_obligations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO payment_obligations (
+      id, household_id, obligation_type, amount_paise, billing_period,
+      beneficiary_model, is_active, beneficiary_driver_id, source_id, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  // Route A houses have 100.00 INR (10000 paise) monthly fee
-  insertObligationStmt.run('ob-demo-101', 'house-demo-101', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.MUNICIPAL_TREASURY_ACCOUNT, 1, sourceId, now);
-  insertObligationStmt.run('ob-demo-102', 'house-demo-102', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 1, sourceId, now);
-  insertObligationStmt.run('ob-demo-103', 'house-demo-103', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.AUTHORIZED_SERVICE_CONTRACTOR, 1, sourceId, now);
+  // Route A houses have 100.00 INR (10000 paise) monthly fee with assigned route driver Ramesh Kumar (wrk-demo-01)
+  insertObligationStmt.run('ob-demo-101', 'house-demo-101', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 1, 'wrk-demo-01', sourceId, now);
+  insertObligationStmt.run('ob-demo-102', 'house-demo-102', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 1, 'wrk-demo-01', sourceId, now);
+  insertObligationStmt.run('ob-demo-103', 'house-demo-103', PaymentObligationType.MONTHLY_CONTRIBUTION, 10000, '2026-09', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 1, 'wrk-demo-01', sourceId, now);
 
   const insertPayStmt = db.prepare(`
-    INSERT INTO resident_payments VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO resident_payments (
+      id, household_id, obligation_id, amount_paise, currency, payment_method,
+      provider_name, provider_transaction_ref, idempotency_key, status,
+      initiated_at, confirmed_at, beneficiary_type, beneficiary_driver_id, source_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertRecStmt = db.prepare(`
     INSERT INTO payment_reconciliations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  // Successful & Reconciled Payment (House 101)
+  // Successful & Reconciled Payment (House 101) - Driver Ramesh Kumar
   insertPayStmt.run(
     'pay-demo-101', 'house-demo-101', 'ob-demo-101', 10000, 'INR', 'UPI',
     'SBI_EPAY', 'SBI-UPI-20260914-1001', 'IDEM-KEY-DEMO-101', PaymentStatus.RECONCILIATION_MATCHED,
-    '2026-09-14T08:00:00.000Z', '2026-09-14T08:01:30.000Z', PaymentBeneficiaryType.MUNICIPAL_TREASURY_ACCOUNT, sourceId
+    '2026-09-14T08:00:00.000Z', '2026-09-14T08:01:30.000Z', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 'wrk-demo-01', sourceId
   );
   insertRecStmt.run(
     'rec-demo-101', 'pay-demo-101', 'BANK-STMT-20260914-001', 10000,
     ReconciliationStatus.MATCHED, '2026-09-14T10:00:00.000Z', 'usr-admin-01', 'Exact match with bank scroll', sourceId
   );
 
-  // SCENARIO 4: Payment Reconciliation Mismatch (House 102)
+  // SCENARIO 4: Payment Reconciliation Mismatch (House 102) - Driver Ramesh Kumar
   // Confirmed at 100.00 INR (10000 paise), but bank statement only deposited 80.00 INR (8000 paise)
   insertPayStmt.run(
     'pay-demo-102', 'house-demo-102', 'ob-demo-102', 10000, 'INR', 'NET_BANKING',
     'SBI_EPAY', 'SBI-NB-20260914-1002', 'IDEM-KEY-DEMO-102', PaymentStatus.RECONCILIATION_MISMATCH,
-    '2026-09-14T08:30:00.000Z', '2026-09-14T08:32:00.000Z', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, sourceId
+    '2026-09-14T08:30:00.000Z', '2026-09-14T08:32:00.000Z', PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 'wrk-demo-01', sourceId
   );
   insertRecStmt.run(
     'rec-demo-102', 'pay-demo-102', 'BANK-STMT-20260914-002', 8000, // MISMATCH (2000 paise discrepancy)
     ReconciliationStatus.UNMATCHED_AMOUNT, '2026-09-14T10:15:00.000Z', 'usr-admin-01', 'Deposit amount short by 20.00 INR', sourceId
   );
 
-  // SCENARIO 5: Pending / Failed Payment (House 103)
+  // SCENARIO 5: Pending / Failed Payment (House 103) - Driver Ramesh Kumar
   insertPayStmt.run(
     'pay-demo-103', 'house-demo-103', 'ob-demo-103', 10000, 'INR', 'CARD',
     'SBI_EPAY', null, 'IDEM-KEY-DEMO-103', PaymentStatus.PENDING_PROVIDER,
-    '2026-09-14T09:00:00.000Z', null, PaymentBeneficiaryType.AUTHORIZED_SERVICE_CONTRACTOR, sourceId
+    '2026-09-14T09:00:00.000Z', null, PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT, 'wrk-demo-01', sourceId
   );
 
   // 13. Deterministic Seed Operational Anomalies

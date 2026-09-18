@@ -87,6 +87,7 @@ export class PaymentService {
       id: string;
       amount_paise: number;
       beneficiary_model: PaymentBeneficiaryType;
+      beneficiary_driver_id?: string | null;
     } | undefined;
 
     if (!obligation) {
@@ -95,6 +96,21 @@ export class PaymentService {
 
     if (params.amountPaise !== obligation.amount_paise) {
       throw new Error(`Payment amount (${params.amountPaise} paise) does not match obligation billed amount (${obligation.amount_paise} paise).`);
+    }
+
+    // Resolve assigned route driver snapshot (obligation snapshot first, then master assignment fallback)
+    let beneficiaryDriverId: string | null = obligation.beneficiary_driver_id || null;
+    if (!beneficiaryDriverId) {
+      const resolveStmt = this.db.prepare(`
+        SELECT ma.driver_id
+        FROM households h
+        JOIN routes r ON h.route_id = r.id
+        JOIN master_assignments ma ON ma.route_id = r.id AND ma.is_current = 1
+        WHERE h.id = ?
+        LIMIT 1
+      `);
+      const row = resolveStmt.get(params.householdId) as { driver_id?: string } | undefined;
+      beneficiaryDriverId = row?.driver_id || null;
     }
 
     const id = crypto.randomUUID();
@@ -107,8 +123,8 @@ export class PaymentService {
         id, household_id, obligation_id, amount_paise, currency,
         payment_method, provider_name, provider_transaction_ref,
         idempotency_key, status, initiated_at, confirmed_at,
-        beneficiary_type, source_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        beneficiary_type, beneficiary_driver_id, source_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     insertStmt.run(
@@ -124,12 +140,56 @@ export class PaymentService {
       PaymentStatus.INITIATED,
       initiatedAt,
       null,
-      obligation.beneficiary_model,
+      obligation.beneficiary_model || PaymentBeneficiaryType.DESIGNATED_WORKER_ACCOUNT,
+      beneficiaryDriverId,
       sourceId
     );
 
-    const getStmt = this.db.prepare(`SELECT * FROM resident_payments WHERE id = ?`);
+    const getStmt = this.db.prepare(`
+      SELECT 
+        p.*,
+        w.full_name as beneficiary_driver_name,
+        w.employee_code as beneficiary_driver_code
+      FROM resident_payments p
+      LEFT JOIN workers w ON p.beneficiary_driver_id = w.id
+      WHERE p.id = ?
+    `);
     return getStmt.get(id) as Record<string, unknown>;
+  }
+
+  /**
+   * Resolves the assigned route driver, vehicle, and route for a household based on current master assignment.
+   */
+  public resolveRouteDriverForHousehold(householdId: string): {
+    driver_id: string | null;
+    driver_name: string | null;
+    driver_code: string | null;
+    vehicle_reg: string | null;
+    route_name: string | null;
+  } {
+    const stmt = this.db.prepare(`
+      SELECT 
+        w.id as driver_id,
+        w.full_name as driver_name,
+        w.employee_code as driver_code,
+        v.registration_number as vehicle_reg,
+        r.name as route_name
+      FROM households h
+      JOIN routes r ON h.route_id = r.id
+      LEFT JOIN master_assignments ma ON ma.route_id = r.id AND ma.is_current = 1
+      LEFT JOIN workers w ON ma.driver_id = w.id
+      LEFT JOIN vehicles v ON ma.vehicle_id = v.id
+      WHERE h.id = ?
+      LIMIT 1
+    `);
+    const res = stmt.get(householdId) as any;
+    return {
+      driver_id: res?.driver_id || null,
+      driver_name: res?.driver_name || null,
+      driver_code: res?.driver_code || null,
+      vehicle_reg: res?.vehicle_reg || null,
+      route_name: res?.route_name || null
+    };
   }
 
   /**

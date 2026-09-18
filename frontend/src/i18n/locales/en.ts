@@ -235,10 +235,10 @@ export const en: TranslationDictionary = {
         correlationNotice: 'Grievance Correlation: Missed collection complaints filed for a date with crew-logged VERIFIED records trigger ANOM-03 (Uncorroborated Dispute) and transition verification to DISPUTED.'
       },
       reconciliation: {
-        title: 'Municipal Revenue Reconciliation & Settlement Audit',
-        subtitle: 'Independent corroboration of payment gateway settlements against bank scroll deposits.',
+        title: 'Collection Fee Reconciliation & Driver Compensation Audit',
+        subtitle: 'Independent municipal oversight and audit of citizen collection fees compensating assigned route drivers.',
         provenanceNotice: 'Financial obligations, payments, and settlements from current dataset. Classified as SIMULATED_DEMO_DATA — not real municipal bank transactions.',
-        bankingNotice: 'Financial System Boundary: This module does NOT process payments, simulate bank transfers, or bypass the payment lifecycle. It records administrative verification of external bank statement scrolls.',
+        bankingNotice: 'Financial Oversight Boundary: Citizen collection fees directly compensate assigned collection drivers. This module does NOT process payments, simulate bank transfers, or bypass the payment lifecycle. It records administrative verification of external bank statement scrolls.',
         crrCardTitle: 'Collection Reconciliation Rate (CRR)',
         crrCardSubtitle: 'Ratio of matched reconciled collections against total levied billing obligations.',
         crrCardCaveat: 'Deterministic backend metric calculated in exact integer paise. Unreconciled or mismatched payments are excluded from numerator.',

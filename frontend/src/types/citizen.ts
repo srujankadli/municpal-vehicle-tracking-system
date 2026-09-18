@@ -57,6 +57,11 @@ export interface PaymentObligation {
   amount_paise: number;
   billing_period: string;
   beneficiary_type: string;
+  beneficiary_driver_id?: string | null;
+  beneficiary_driver_name?: string | null;
+  beneficiary_driver_code?: string | null;
+  assigned_vehicle_reg?: string | null;
+  assigned_route_name?: string | null;
   is_active: number;
 }
 
@@ -69,11 +74,18 @@ export interface ResidentPayment {
   payment_method: string;
   provider_name?: string | null;
   transaction_ref?: string | null;
+  provider_transaction_ref?: string | null;
   idempotency_key?: string | null;
   status: string;
   initiated_at: string;
   completed_at?: string | null;
+  confirmed_at?: string | null;
   beneficiary_type?: string | null;
+  beneficiary_driver_id?: string | null;
+  beneficiary_driver_name?: string | null;
+  beneficiary_driver_code?: string | null;
+  assigned_vehicle_reg?: string | null;
+  assigned_route_name?: string | null;
   reconciliation_status?: string | null;
   bank_statement_ref?: string | null;
 }

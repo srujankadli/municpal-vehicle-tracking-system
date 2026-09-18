@@ -167,6 +167,11 @@ export interface PaymentObligation {
   amount_paise: number;
   obligation_type: string;
   beneficiary_type: string;
+  beneficiary_driver_id?: string | null;
+  beneficiary_driver_name?: string | null;
+  beneficiary_driver_code?: string | null;
+  assigned_vehicle_reg?: string | null;
+  assigned_route_name?: string | null;
   is_active: number;
   source_id: string;
   created_at: string;
@@ -180,6 +185,12 @@ export interface ResidentPayment {
   payment_method: string;
   status: string;
   provider_transaction_ref: string | null;
+  beneficiary_type?: string | null;
+  beneficiary_driver_id?: string | null;
+  beneficiary_driver_name?: string | null;
+  beneficiary_driver_code?: string | null;
+  assigned_vehicle_reg?: string | null;
+  assigned_route_name?: string | null;
   reconciliation_status?: string | null;
   bank_statement_ref?: string | null;
   initiated_at: string;

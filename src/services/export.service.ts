@@ -482,6 +482,9 @@ export class ExportService {
              rp.initiated_at,
              rp.confirmed_at,
              rp.beneficiary_type,
+             rp.beneficiary_driver_id,
+             w.full_name as beneficiary_driver_name,
+             w.employee_code as beneficiary_driver_code,
              pr.id as reconciliation_id,
              pr.status as reconciliation_status,
              pr.bank_statement_ref,
@@ -494,6 +497,7 @@ export class ExportService {
       FROM resident_payments rp
       JOIN payment_obligations po ON po.id = rp.obligation_id
       JOIN households h ON h.id = rp.household_id
+      LEFT JOIN workers w ON w.id = rp.beneficiary_driver_id
       LEFT JOIN payment_reconciliations pr ON pr.payment_id = rp.id
       LEFT JOIN data_sources ds ON ds.id = rp.source_id
       WHERE 1=1

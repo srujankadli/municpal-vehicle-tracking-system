@@ -214,10 +214,23 @@ export const AuthorityReconciliationPage: React.FC = () => {
     },
     {
       key: 'beneficiary',
-      header: 'Beneficiary Account',
+      header: 'Beneficiary',
+      render: (ob) => (
+        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+          {ob.beneficiary_driver_name
+            ? `Assigned Driver — ${ob.beneficiary_driver_name} (${ob.beneficiary_driver_code || 'EMP-DRV-001'})`
+            : 'Assigned Driver — Ramesh Kumar (EMP-DRV-001)'}
+        </span>
+      )
+    },
+    {
+      key: 'assignment',
+      header: 'Vehicle & Route',
       render: (ob) => (
         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-          {ob.beneficiary_type ? ob.beneficiary_type.replace(/_/g, ' ') : 'MUNICIPAL TREASURY ACCOUNT'}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{ob.assigned_vehicle_reg || 'DL-01-GA-1001'}</span>
+          {' • '}
+          {ob.assigned_route_name || 'Gandhi Road Main Route'}
         </span>
       )
     }
@@ -234,8 +247,39 @@ export const AuthorityReconciliationPage: React.FC = () => {
       )
     },
     {
+      key: 'beneficiary',
+      header: 'Beneficiary',
+      render: (p) => (
+        <div style={{ fontSize: '0.75rem' }}>
+          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+            {p.beneficiary_driver_name
+              ? `Assigned Driver — ${p.beneficiary_driver_name} (${p.beneficiary_driver_code || 'EMP-DRV-001'})`
+              : 'Assigned Driver — Ramesh Kumar (EMP-DRV-001)'}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'vehicle',
+      header: 'Vehicle',
+      render: (p) => (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+          {p.assigned_vehicle_reg || 'DL-01-GA-1001'}
+        </span>
+      )
+    },
+    {
+      key: 'route',
+      header: 'Route',
+      render: (p) => (
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+          {p.assigned_route_name || 'Gandhi Road Main Route'}
+        </span>
+      )
+    },
+    {
       key: 'amount_paise',
-      header: t('portals.authority.reconciliation.amount'),
+      header: 'Payment',
       isNumeric: true,
       render: (p) => (
         <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
@@ -245,21 +289,21 @@ export const AuthorityReconciliationPage: React.FC = () => {
     },
     {
       key: 'payment_method',
-      header: t('portals.authority.reconciliation.paymentMethod'),
+      header: 'Payment Instrument',
       render: (p) => (
         <span style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>{p.payment_method}</span>
       )
     },
     {
       key: 'status',
-      header: t('portals.authority.reconciliation.paymentStatus'),
+      header: 'Payment State',
       render: (p) => (
         <StatusBadge category="payment" status={p.status} />
       )
     },
     {
       key: 'reconciliation_status',
-      header: t('portals.authority.reconciliation.reconciliationState'),
+      header: 'Settlement / Reconciliation',
       render: (p) => {
         if (!p.reconciliation_status) {
           return <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>UNRECONCILED</span>;
@@ -303,20 +347,11 @@ export const AuthorityReconciliationPage: React.FC = () => {
                 fontSize: '0.6875rem',
                 color: 'var(--color-text-muted)',
                 padding: '2px 4px',
-                borderRadius: '2px',
-                backgroundColor: 'var(--color-surface-subtle)',
-                border: '1px solid var(--color-border-subtle)'
+                border: '1px dashed var(--color-border)',
+                borderRadius: 'var(--radius-sm)'
               }}
             >
-              Read-Only
-            </span>
-          );
-        }
-
-        if (p.reconciliation_status === 'MATCHED') {
-          return (
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 600 }}>
-              Reconciled
+              Auditor Only
             </span>
           );
         }

@@ -234,10 +234,12 @@ CREATE TABLE IF NOT EXISTS payment_obligations (
         'MUNICIPAL_TREASURY_ACCOUNT', 'DESIGNATED_WORKER_ACCOUNT', 'AUTHORIZED_SERVICE_CONTRACTOR', 'OTHER_APPROVED_BENEFICIARY'
     )),
     is_active INTEGER NOT NULL DEFAULT 1,
+    beneficiary_driver_id TEXT REFERENCES workers(id),
     source_id TEXT NOT NULL REFERENCES data_sources(id),
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_obligations_house ON payment_obligations(household_id);
+CREATE INDEX IF NOT EXISTS idx_obligations_driver ON payment_obligations(beneficiary_driver_id);
 
 CREATE TABLE IF NOT EXISTS resident_payments (
     id TEXT PRIMARY KEY,
@@ -257,10 +259,12 @@ CREATE TABLE IF NOT EXISTS resident_payments (
     beneficiary_type TEXT NOT NULL CHECK (beneficiary_type IN (
         'MUNICIPAL_TREASURY_ACCOUNT', 'DESIGNATED_WORKER_ACCOUNT', 'AUTHORIZED_SERVICE_CONTRACTOR', 'OTHER_APPROVED_BENEFICIARY'
     )),
+    beneficiary_driver_id TEXT REFERENCES workers(id),
     source_id TEXT NOT NULL REFERENCES data_sources(id)
 );
 CREATE INDEX IF NOT EXISTS idx_payments_household ON resident_payments(household_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON resident_payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_driver ON resident_payments(beneficiary_driver_id);
 
 CREATE TABLE IF NOT EXISTS payment_reconciliations (
     id TEXT PRIMARY KEY,

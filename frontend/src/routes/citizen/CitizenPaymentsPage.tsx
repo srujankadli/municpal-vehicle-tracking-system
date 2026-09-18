@@ -208,8 +208,17 @@ export const CitizenPaymentsPage: React.FC = () => {
                         {ob.obligation_type}
                       </code>
                     </td>
-                    <td style={{ padding: '0.625rem 0.75rem', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                      {ob.beneficiary_type}
+                    <td style={{ padding: '0.625rem 0.75rem', fontSize: '0.75rem' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                        {ob.beneficiary_driver_name
+                          ? `Assigned Driver — ${ob.beneficiary_driver_name} (${ob.beneficiary_driver_code || 'EMP-DRV'})`
+                          : 'Assigned Collection Driver'}
+                      </div>
+                      {ob.assigned_vehicle_reg && (
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                          Vehicle: {ob.assigned_vehicle_reg} • Route: {ob.assigned_route_name || 'Assigned Route'}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '0.625rem 0.75rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: '0.9375rem' }}>
                       {formatCurrency(ob.amount_paise)}
@@ -403,7 +412,7 @@ export const CitizenPaymentsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bill Summary */}
+            {/* Bill & Driver Beneficiary Summary */}
             <div
               style={{
                 padding: '1rem',
@@ -411,22 +420,48 @@ export const CitizenPaymentsPage: React.FC = () => {
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--color-border)',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '0.625rem',
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'block' }}>
-                  {t('portals.citizen.billingPeriod')}: {activeModalObligation.billing_period}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                  {activeModalObligation.obligation_type}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'block' }}>
+                    {t('portals.citizen.billingPeriod')}: {activeModalObligation.billing_period}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {activeModalObligation.obligation_type}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '1.375rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--color-primary)' }}>
+                    {formatCurrency(activeModalObligation.amount_paise)}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span style={{ fontSize: '1.5rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-primary)' }}>
-                  {formatCurrency(activeModalObligation.amount_paise)}
-                </span>
+
+              {/* Explicit Assigned Driver Beneficiary Details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.8125rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Beneficiary:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                    {activeModalObligation.beneficiary_driver_name
+                      ? `Assigned Collection Driver — ${activeModalObligation.beneficiary_driver_name} (${activeModalObligation.beneficiary_driver_code || 'EMP-DRV'})`
+                      : 'Assigned Collection Driver'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Vehicle:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                    {activeModalObligation.assigned_vehicle_reg || 'DL-01-GA-1001'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Collection Route:</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>
+                    {activeModalObligation.assigned_route_name || 'Gandhi Road Main Route'}
+                  </span>
+                </div>
               </div>
             </div>
 
