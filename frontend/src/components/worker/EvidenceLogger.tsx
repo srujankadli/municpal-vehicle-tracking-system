@@ -13,15 +13,50 @@ export interface EvidenceLoggerProps {
   onEvidenceRecorded?: (res: SubmitEvidenceResponse) => void;
 }
 
+export interface AssignedHousehold {
+  id: string;
+  service_uid: string;
+  resident_name: string;
+  address_line: string;
+}
+
 export const EvidenceLogger: React.FC<EvidenceLoggerProps> = ({ runId, onEvidenceRecorded }) => {
   const { t } = useTranslation();
 
   const [householdId, setHouseholdId] = useState<string>('house-demo-101');
+  const [availableHouseholds, setAvailableHouseholds] = useState<AssignedHousehold[]>([]);
+  const [loadingHouseholds, setLoadingHouseholds] = useState<boolean>(false);
   const [evidenceType, setEvidenceType] = useState<EvidenceType>('DOORSTEP_NFC_TAP');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submissionResult, setSubmissionResult] = useState<SubmitEvidenceResponse | null>(null);
   const [queuedOffline, setQueuedOffline] = useState<QueuedEvidenceEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadAssignedHouseholds() {
+      if (!runId) return;
+      try {
+        setLoadingHouseholds(true);
+        const res = await apiClient.get<{ households: AssignedHousehold[] }>(
+          `/api/v1/operations/runs/${runId}/households`
+        );
+        if (!isMounted) return;
+        if (res.households && res.households.length > 0) {
+          setAvailableHouseholds(res.households);
+          setHouseholdId(res.households[0].id);
+        }
+      } catch {
+        // Fallback to manual entry if offline or endpoint unavailable
+      } finally {
+        if (isMounted) setLoadingHouseholds(false);
+      }
+    }
+    loadAssignedHouseholds();
+    return () => {
+      isMounted = false;
+    };
+  }, [runId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,15 +245,16 @@ export const EvidenceLogger: React.FC<EvidenceLoggerProps> = ({ runId, onEvidenc
               marginBottom: '0.375rem',
             }}
           >
-            Target Household Identifier / UID
+            Assigned Run Household {loadingHouseholds && '(Loading assigned households...)'}
           </label>
           <input
             id="target-household-id"
+            list="assigned-households-list"
             type="text"
             value={householdId}
             onChange={(e) => setHouseholdId(e.target.value)}
             required
-            placeholder="e.g. house-demo-101 or H-14A-01"
+            placeholder="e.g. house-demo-101 or select from assigned roster"
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -231,6 +267,15 @@ export const EvidenceLogger: React.FC<EvidenceLoggerProps> = ({ runId, onEvidenc
               boxSizing: 'border-box',
             }}
           />
+          {availableHouseholds.length > 0 && (
+            <datalist id="assigned-households-list">
+              {availableHouseholds.map((hh) => (
+                <option key={hh.id} value={hh.id}>
+                  {hh.service_uid} — {hh.resident_name} ({hh.address_line})
+                </option>
+              ))}
+            </datalist>
+          )}
         </div>
 
         <div>

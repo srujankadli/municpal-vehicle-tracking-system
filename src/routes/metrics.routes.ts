@@ -13,6 +13,26 @@ export const metricsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     preHandler: [authenticate, requireRoles(UserRole.AUTHORITY, UserRole.SUPERVISOR, UserRole.WARD_OFFICER, UserRole.ADMIN)]
   }, async (request, reply) => {
     const { run_id } = request.params as { run_id: string };
+    const user = request.user!;
+
+    if (user.role === UserRole.SUPERVISOR || user.role === UserRole.WARD_OFFICER) {
+      if (!user.wardId) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Supervisor or Ward Officer has no assigned ward.' });
+      }
+      const runWardStmt = db.prepare(`
+        SELECT ar.ward_id
+        FROM daily_service_runs r
+        JOIN daily_assignments a ON r.assignment_id = a.id
+        JOIN routes ro ON a.route_id = ro.id
+        JOIN areas ar ON ro.area_id = ar.id
+        WHERE r.id = ?
+      `);
+      const runWard = runWardStmt.get(run_id) as { ward_id: string } | undefined;
+      if (runWard && runWard.ward_id !== user.wardId) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Access Denied: Service run belongs to another ward.' });
+      }
+    }
+
     const result = metrics.calculateRouteCompletionRate(run_id);
     return reply.send(result);
   });
@@ -22,6 +42,26 @@ export const metricsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     preHandler: [authenticate, requireRoles(UserRole.AUTHORITY, UserRole.SUPERVISOR, UserRole.WARD_OFFICER, UserRole.ADMIN)]
   }, async (request, reply) => {
     const { run_id } = request.params as { run_id: string };
+    const user = request.user!;
+
+    if (user.role === UserRole.SUPERVISOR || user.role === UserRole.WARD_OFFICER) {
+      if (!user.wardId) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Supervisor or Ward Officer has no assigned ward.' });
+      }
+      const runWardStmt = db.prepare(`
+        SELECT ar.ward_id
+        FROM daily_service_runs r
+        JOIN daily_assignments a ON r.assignment_id = a.id
+        JOIN routes ro ON a.route_id = ro.id
+        JOIN areas ar ON ro.area_id = ar.id
+        WHERE r.id = ?
+      `);
+      const runWard = runWardStmt.get(run_id) as { ward_id: string } | undefined;
+      if (runWard && runWard.ward_id !== user.wardId) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Access Denied: Service run belongs to another ward.' });
+      }
+    }
+
     const result = metrics.calculateServiceDiscrepancyRate(run_id);
     return reply.send(result);
   });

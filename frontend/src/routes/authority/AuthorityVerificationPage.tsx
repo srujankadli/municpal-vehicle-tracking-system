@@ -29,6 +29,7 @@ import {
   Edit3,
   HelpCircle
 } from 'lucide-react';
+import { useModalFocusTrap } from '../../hooks/useModalFocusTrap';
 
 interface HouseholdVerificationRow {
   household: MasterHousehold;
@@ -61,6 +62,11 @@ export const AuthorityVerificationPage: React.FC = () => {
   const [evidenceItems, setEvidenceItems] = useState<ServiceEvidenceItem[]>([]);
   const [loadingEvidence, setLoadingEvidence] = useState<boolean>(false);
 
+  const inspectionModalRef = useModalFocusTrap({
+    isOpen: !!inspectingRow,
+    onClose: () => setInspectingRow(null)
+  });
+
   // Manual Override Modal
   const [overrideTarget, setOverrideTarget] = useState<HouseholdVerificationRow | null>(null);
   const [targetStatus, setTargetStatus] = useState<string>('VERIFIED');
@@ -68,6 +74,11 @@ export const AuthorityVerificationPage: React.FC = () => {
   const [overrideSubmitting, setOverrideSubmitting] = useState<boolean>(false);
   const [overrideMessage, setOverrideMessage] = useState<string | null>(null);
   const [overrideError, setOverrideError] = useState<string | null>(null);
+
+  const overrideModalRef = useModalFocusTrap({
+    isOpen: !!overrideTarget,
+    onClose: () => setOverrideTarget(null)
+  });
 
   // Load assignments to determine available runs
   const fetchInitialData = async () => {
@@ -531,6 +542,7 @@ export const AuthorityVerificationPage: React.FC = () => {
       {/* Evidence Inspection Drawer / Modal */}
       {inspectingRow && (
         <div
+          ref={inspectionModalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="evidence-drawer-title"
@@ -703,6 +715,7 @@ export const AuthorityVerificationPage: React.FC = () => {
       {/* Manual Override Dialog */}
       {overrideTarget && (
         <div
+          ref={overrideModalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="override-dialog-title"

@@ -61,14 +61,20 @@ export const AuthorityGeospatialMap: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch routes
-        const routesData = await apiClient.get<MasterRoute[]>('/master/routes');
+        // Fetch routes safely unwrapping payload envelope
+        const routesRes = await apiClient.get<any>('/master/routes');
         if (!isMounted) return;
-        setRoutes(routesData);
+        const routesList: MasterRoute[] = Array.isArray(routesRes)
+          ? routesRes
+          : (routesRes?.routes || []);
+        setRoutes(routesList);
 
-        // Fetch households
-        const householdsData = await apiClient.get<MasterHousehold[]>('/master/households');
+        // Fetch households safely unwrapping payload envelope
+        const householdsRes = await apiClient.get<any>('/master/households');
         if (!isMounted) return;
+        const householdsList: MasterHousehold[] = Array.isArray(householdsRes)
+          ? householdsRes
+          : (householdsRes?.households || []);
 
         // Fetch verification statuses for households (mapped against demo runs)
         // Run-demo-01 is for Route A (route-demo-A), Run-demo-02 is for Route B, Run-demo-03 for Route C
@@ -79,7 +85,7 @@ export const AuthorityGeospatialMap: React.FC = () => {
         };
 
         const enrichedHouseholds: HouseholdMapItem[] = await Promise.all(
-          householdsData.map(async (hh) => {
+          householdsList.map(async (hh) => {
             const runId = runMap[hh.route_id];
             let status: HouseholdVerificationSynthesis['status'] = 'EXPECTED';
             let evidenceCount = 0;
@@ -426,31 +432,30 @@ export const AuthorityGeospatialMap: React.FC = () => {
         </div>
       }
     >
-      {/* 1. Legal Provenance, Simulation & Epistemic Audit Disclaimers */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-        <Alert
-          type="info"
-          title="SIMULATED_DEMO_DATA: Cartographic Reference & Household Locations"
-          message={`${t('portals.authority.map.demoNotice')} All boundary polygons, corridors, and household premises coordinates represent seeded demonstration data rather than surveyed municipal GIS data. ${t('portals.authority.map.noFakeAnimation')}`}
-        />
-        <div
+      {/* 1. Map Provenance & Verification Notice */}
+      <div style={{ marginBottom: '1rem' }}>
+        <details
           style={{
             padding: '0.625rem 0.875rem',
             backgroundColor: 'var(--color-surface-subtle)',
-            borderLeft: '4px solid var(--color-warning)',
             borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
             fontSize: '0.8125rem',
-            color: 'var(--color-text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.625rem'
+            color: 'var(--color-text-secondary)'
           }}
         >
-          <AlertCircle size={18} style={{ color: 'var(--color-warning)', flexShrink: 0 }} aria-hidden="true" />
-          <div>
-            <strong>Epistemic Invariant:</strong> {t('portals.authority.map.epistemicNotice')}
+          <summary style={{ fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+            ℹ Map Provenance Notice: Demonstration data shown (Click to expand details)
+          </summary>
+          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.75rem' }}>
+            <p style={{ margin: 0 }}>
+              <strong>Notice:</strong> Boundary polygons, corridors, and household premises coordinates represent demonstration data. Vehicle proximity indicates observed telemetry, not verified physical collection.
+            </p>
+            <p style={{ margin: 0 }}>
+              <strong>Rule:</strong> Collection is marked VERIFIED only upon doorstep evidence (QR/NFC) from the assigned crew.
+            </p>
           </div>
-        </div>
+        </details>
       </div>
 
       {error && <Alert type="error" message={error} />}

@@ -64,22 +64,17 @@ export const CitizenOverviewPage: React.FC = () => {
         // Route info optional
       }
 
-      // 3. Fetch today's assignment for this route to check verification status
+      // 3. Fetch today's service status dynamically via the citizen endpoint
       try {
-        const todayStr = '2026-09-14';
-        const assignRes = await apiClient.get<{ assignments: any[] }>(`/operations/assignments?service_date=${todayStr}`);
-        const todayAssign = assignRes.assignments.find(a => a.route_id === houseRes.household.route_id);
-        if (todayAssign) {
-          // Find run for this assignment
-          const runsRes = await apiClient.get<{ run: any }>(`/operations/runs/run-demo-01`).catch(() => null);
-          // Query household synthesis
-          const statusRes = await apiClient.get<{ synthesis: ServiceSynthesis }>(
-            `/operations/runs/run-demo-01/households/${householdId}/status`
-          ).catch(() => null);
+        const statusRes = await apiClient.get<{
+          synthesis: ServiceSynthesis;
+          route?: { id: string; name: string };
+          assignment?: any;
+          run?: any;
+        }>('/operations/citizen/service-status');
 
-          if (statusRes?.synthesis) {
-            setSynthesis(statusRes.synthesis);
-          }
+        if (statusRes?.synthesis) {
+          setSynthesis(statusRes.synthesis);
         }
       } catch {
         // Status fetch non-fatal

@@ -20,6 +20,7 @@ import {
   Info,
   CheckCircle2
 } from 'lucide-react';
+import { useModalFocusTrap } from '../../hooks/useModalFocusTrap';
 
 export const AuthorityAnomaliesPage: React.FC = () => {
   const { t, locale } = useTranslation();
@@ -37,6 +38,11 @@ export const AuthorityAnomaliesPage: React.FC = () => {
 
   // Trigger Evidence Drawer
   const [inspectingAnomaly, setInspectingAnomaly] = useState<OperationalAnomaly | null>(null);
+
+  const modalRef = useModalFocusTrap({
+    isOpen: !!inspectingAnomaly,
+    onClose: () => setInspectingAnomaly(null)
+  });
 
   // Manual Evaluation States
   const [evaluatingInactivity, setEvaluatingInactivity] = useState<boolean>(false);
@@ -384,6 +390,7 @@ export const AuthorityAnomaliesPage: React.FC = () => {
       {/* Trigger Evidence Inspection Drawer */}
       {inspectingAnomaly && (
         <div
+          ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="anomaly-evidence-title"

@@ -23,8 +23,14 @@ export const WorkerDashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [assignment, setAssignment] = useState<WorkerAssignment | null>(null);
+  interface AssignmentWithRun extends WorkerAssignment {
+    run_id?: string;
+    run_status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  }
+
+  const [assignment, setAssignment] = useState<AssignmentWithRun | null>(null);
   const [runDetail, setRunDetail] = useState<ServiceRunDetail | null>(null);
+  const [updatingRun, setUpdatingRun] = useState<boolean>(false);
 
   const fetchAssignment = async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -32,19 +38,18 @@ export const WorkerDashboard: React.FC = () => {
     setError(null);
 
     try {
-      // 1. Fetch own operational assignment
-      const res = await apiClient.get<{ assignment: WorkerAssignment | null }>(
+      // 1. Fetch own operational assignment (includes run_id from service runs)
+      const res = await apiClient.get<{ assignment: AssignmentWithRun | null }>(
         '/api/v1/operations/assignments/my-assignment'
       );
       setAssignment(res.assignment);
 
       // 2. If assignment exists, resolve service run
-      if (res.assignment?.id) {
-        // Find service run linked to assignment
-        const runId = res.assignment.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01';
+      const activeRunId = res.assignment?.run_id || (res.assignment?.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01');
+      if (activeRunId) {
         try {
           const runRes = await apiClient.get<{ run: ServiceRunDetail }>(
-            `/api/v1/operations/runs/${runId}`
+            `/api/v1/operations/runs/${activeRunId}`
           );
           setRunDetail(runRes.run);
         } catch {
@@ -56,6 +61,25 @@ export const WorkerDashboard: React.FC = () => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleUpdateRunStatus = async (newStatus: 'IN_PROGRESS' | 'COMPLETED') => {
+    const currentRunId = assignment?.run_id || runDetail?.id || (assignment?.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01');
+    if (!currentRunId) return;
+
+    setUpdatingRun(true);
+    setError(null);
+    try {
+      await apiClient.patch(`/api/v1/operations/runs/${currentRunId}/status`, {
+        target_status: newStatus,
+        status: newStatus
+      });
+      await fetchAssignment(true);
+    } catch (err: any) {
+      setError(err.message || `Failed to update run status to ${newStatus}`);
+    } finally {
+      setUpdatingRun(false);
     }
   };
 
@@ -108,7 +132,60 @@ export const WorkerDashboard: React.FC = () => {
 
       {/* 2. Today's Assignment Card */}
       {assignment ? (
-        <AssignmentCard assignment={assignment} roleName={roleName} />
+        <>
+          <AssignmentCard assignment={assignment} roleName={roleName} />
+
+          {/* Service Run Lifecycle Controls */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '1rem',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Truck size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+              <div>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                  Collection Run Status:
+                </span>{' '}
+                <StatusBadge
+                  category="run"
+                  status={runDetail?.status || assignment.run_status || 'NOT_STARTED'}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {(!runDetail?.status || runDetail.status === 'NOT_STARTED' || assignment.run_status === 'NOT_STARTED') && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleUpdateRunStatus('IN_PROGRESS')}
+                  disabled={updatingRun}
+                >
+                  {updatingRun ? 'Starting...' : 'Start Collection Run'}
+                </Button>
+              )}
+              {(runDetail?.status === 'IN_PROGRESS' || assignment.run_status === 'IN_PROGRESS') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleUpdateRunStatus('COMPLETED')}
+                  disabled={updatingRun}
+                >
+                  {updatingRun ? 'Completing...' : 'Complete Collection Run'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
       ) : (
         <EmptyState
           title="No Assignment for Today"
@@ -116,18 +193,18 @@ export const WorkerDashboard: React.FC = () => {
         />
       )}
 
-      {/* 3. Doorstep Evidence Logger (Phase 1 Event Recording Integration) */}
+      {/* 3. Doorstep Evidence Logger */}
       {assignment && (
         <EvidenceLogger
-          runId={assignment.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01'}
+          runId={assignment.run_id || runDetail?.id || (assignment.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01')}
           onEvidenceRecorded={handleEvidenceRecorded}
         />
       )}
 
-      {/* 4. Offline Queue & Sync Manager (Phase 4 Batch 2) */}
+      {/* 4. Offline Queue & Sync Manager */}
       {assignment && (
         <OfflineQueueViewer
-          runId={assignment.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01'}
+          runId={assignment.run_id || runDetail?.id || (assignment.id === 'da-demo-02' ? 'run-demo-02' : 'run-demo-01')}
           onSyncComplete={() => fetchAssignment(true)}
         />
       )}

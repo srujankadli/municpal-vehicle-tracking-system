@@ -17,6 +17,8 @@ import { DataClassification } from './types/domain.js';
 import { getLoggerConfig } from './config/logger.js';
 import { config } from './config/index.js';
 import type { IDatabaseAdapter } from './db/adapters/types.js';
+import { getDatabase } from './db/connection.js';
+import { AnomalyService } from './services/anomaly.service.js';
 
 export interface BuildAppOptions {
   logger?: any;
@@ -79,8 +81,8 @@ export function buildApp(options?: BuildAppOptions): FastifyInstance {
 
   // 2. CORS registration
   app.register(cors, {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    origin: config.CORS_ORIGIN === '*' ? '*' : config.CORS_ORIGIN.split(',').map(s => s.trim()),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   });
 
   // 3. HTTP Rate Limiting
@@ -148,6 +150,31 @@ export function buildApp(options?: BuildAppOptions): FastifyInstance {
   app.register(anomaliesRoutes, { prefix: '/api/v1/anomalies' });
   app.register(auditRoutes, { prefix: '/api/v1/audit' });
   app.register(exportRoutes, { prefix: '/api/v1/audit/export' });
+
+  // Automatic ANOM-01 Inactivity Watcher:
+  // Deterministic background evaluator for ANOM-01 that runs independently of dashboard views or manual endpoints.
+  const db = getDatabase();
+  const anomalyService = new AnomalyService(db);
+  const anomalySweepTimer = setInterval(() => {
+    try {
+      anomalyService.evaluateAllOverdueVehicleInactivity();
+    } catch (err) {
+      app.log.error(err, 'Automatic ANOM-01 background sweep encountered an error');
+    }
+  }, 60_000);
+
+  if (anomalySweepTimer.unref) {
+    anomalySweepTimer.unref();
+  }
+
+  app.addHook('onClose', async () => {
+    clearInterval(anomalySweepTimer);
+  });
+
+  app.decorate('anomalyService', anomalyService);
+  app.decorate('runAutomaticAnomalySweep', (currentIsoTime?: string) => {
+    return anomalyService.evaluateAllOverdueVehicleInactivity(currentIsoTime);
+  });
 
   // Consistent Error Handler with structured operational logging
   app.setErrorHandler((error: any, request, reply) => {

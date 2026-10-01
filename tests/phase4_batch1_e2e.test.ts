@@ -208,12 +208,28 @@ describe('Phase 4 - Batch 1: Multi-Role End-to-End User Journeys', () => {
 
     test('inspects relational append-only audit explorer with before/after state diffs', async () => {
       // Execute an administrative reconciliation action that writes an audit log entry
+      const db = getDatabase();
+      const testPaymentId = 'pay-e2e-audit-test';
+      const now = new Date().toISOString();
+      const srcRow = db.prepare(`SELECT id FROM data_sources LIMIT 1`).get() as { id: string };
+      db.prepare(`
+        INSERT INTO resident_payments (
+          id, household_id, obligation_id, amount_paise, currency, payment_method,
+          provider_name, provider_transaction_ref, idempotency_key, status,
+          initiated_at, confirmed_at, beneficiary_type, beneficiary_driver_id, source_id
+        ) VALUES (
+          ?, 'house-demo-101', 'ob-demo-101', 10000, 'INR', 'UPI',
+          'SBI_EPAY', 'SBI-E2E-AUDIT-REF', 'IDEM-E2E-AUDIT', 'SUCCESSFUL',
+          ?, ?, 'DESIGNATED_WORKER_ACCOUNT', 'wrk-demo-01', ?
+        )
+      `).run(testPaymentId, now, now, srcRow.id);
+
       const reconcileRes = await app.inject({
         method: 'POST',
         url: '/api/v1/finance/reconcile',
         headers: { authorization: 'Bearer ' + authorityToken },
         payload: {
-          payment_id: 'pay-demo-101',
+          payment_id: testPaymentId,
           bank_statement_ref: 'BANK-STMT-E2E-AUDIT-001',
           statement_amount_paise: 10000,
           notes: 'E2E administrative settlement audit test'

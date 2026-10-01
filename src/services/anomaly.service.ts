@@ -35,6 +35,58 @@ export class AnomalyService {
     description: string;
     trigger_evidence: Record<string, unknown>;
   }): AnomalyRecord {
+    // 1. Idempotency Check for run-associated anomalies
+    if (params.service_run_id) {
+      const existing = this.db.prepare(`
+        SELECT * FROM operational_anomalies
+        WHERE anomaly_id = ? AND service_run_id = ? AND status = ?
+      `).get(params.anomaly_id, params.service_run_id, AnomalyStatus.UNRESOLVED) as AnomalyRecord | undefined;
+
+      if (existing) {
+        return existing;
+      }
+    } else {
+      // 2. Idempotency Check for global/unassigned anomalies (e.g. ANOM-01 pre-run, ANOM-04, ANOM-05, ANOM-07)
+      if (params.anomaly_id === 'ANOM-01' && params.trigger_evidence?.assignment_id) {
+        const existingAnom01 = this.db.prepare(`
+          SELECT * FROM operational_anomalies
+          WHERE anomaly_id = 'ANOM-01' AND status = ?
+            AND json_extract(trigger_evidence, '$.assignment_id') = ?
+        `).get(AnomalyStatus.UNRESOLVED, String(params.trigger_evidence.assignment_id)) as AnomalyRecord | undefined;
+
+        if (existingAnom01) {
+          return existingAnom01;
+        }
+      }
+
+      const existingGlobal = this.db.prepare(`
+        SELECT * FROM operational_anomalies
+        WHERE anomaly_id = ? AND service_run_id IS NULL AND status = ?
+      `).all(params.anomaly_id, AnomalyStatus.UNRESOLVED) as unknown as AnomalyRecord[];
+
+      const newKey = Object.entries(params.trigger_evidence)
+        .filter(([k]) => k !== 'evaluated_time' && k !== 'current_time')
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${k}:${v}`)
+        .join(';');
+
+      for (const eg of existingGlobal) {
+        try {
+          const parsed = JSON.parse(eg.trigger_evidence);
+          const egKey = Object.entries(parsed)
+            .filter(([k]) => k !== 'evaluated_time' && k !== 'current_time')
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => `${k}:${v}`)
+            .join(';');
+          if (egKey === newKey) {
+            return eg;
+          }
+        } catch {
+          // Continue
+        }
+      }
+    }
+
     const id = crypto.randomUUID();
     const detectedAt = new Date().toISOString();
     const sourceId = this.provenance.getPrimaryDemoSourceId();
@@ -119,6 +171,29 @@ export class AnomalyService {
     }
 
     return null;
+  }
+
+  /**
+   * Deterministic Automatic Evaluation: Evaluates all pending scheduled assignments
+   * where scheduled_start has elapsed past the 90-minute delay threshold without departure.
+   * Runs independently of dashboard page views or manual HTTP triggers.
+   * 100% idempotent: will not create duplicate unresolved anomalies.
+   */
+  public evaluateAllOverdueVehicleInactivity(currentIsoTime?: string): AnomalyRecord[] {
+    const pendingAssignments = this.db.prepare(`
+      SELECT a.id FROM daily_assignments a
+      LEFT JOIN daily_service_runs r ON a.id = r.assignment_id
+      WHERE (a.status = 'SCHEDULED' OR r.run_status = 'NOT_STARTED')
+    `).all() as { id: string }[];
+
+    const detected: AnomalyRecord[] = [];
+    for (const pa of pendingAssignments) {
+      const record = this.evaluateAssignedVehicleInactivity(pa.id, currentIsoTime);
+      if (record) {
+        detected.push(record);
+      }
+    }
+    return detected;
   }
 
   /**
@@ -321,7 +396,7 @@ export class AnomalyService {
         service_run_id: serviceRunId,
         anomaly_id: 'ANOM-06',
         severity: AnomalySeverity.HIGH,
-        description: `Route marked COMPLETED but completion rate is only ${rc.value_percentage}%, below 60% threshold. Flagged for route truncation review.`,
+        description: `Route marked COMPLETED but completion rate is only ${rc.value_percentage}%, below 60% threshold; needs review.`,
         trigger_evidence: {
           service_run_id: serviceRunId,
           completion_rate: rc.value_percentage,
@@ -339,32 +414,65 @@ export class AnomalyService {
    * Same vehicle or driver assigned to multiple distinct routes on the same service date.
    */
   public evaluateAssignmentConflicts(serviceDate: string): AnomalyRecord[] {
-    const stmt = this.db.prepare(`
-      SELECT vehicle_id, driver_id, COUNT(*) as count, GROUP_CONCAT(route_id) as routes
+    const detected: AnomalyRecord[] = [];
+
+    // 1. Vehicle double-booking detection
+    const vehicleStmt = this.db.prepare(`
+      SELECT vehicle_id, COUNT(*) as count, GROUP_CONCAT(route_id) as routes
       FROM daily_assignments
       WHERE service_date = ?
       GROUP BY vehicle_id
       HAVING COUNT(*) > 1
     `);
-    const conflicts = stmt.all(serviceDate) as {
+    const vehicleConflicts = vehicleStmt.all(serviceDate) as {
       vehicle_id: string;
-      driver_id: string;
       count: number;
       routes: string;
     }[];
 
-    const detected: AnomalyRecord[] = [];
-
-    for (const conflict of conflicts) {
+    for (const conflict of vehicleConflicts) {
       detected.push(
         this.recordAnomaly({
           service_run_id: null,
           anomaly_id: 'ANOM-07',
           severity: AnomalySeverity.HIGH,
-          description: `Vehicle double-booking detected: Vehicle ${conflict.vehicle_id} assigned to multiple routes (${conflict.routes}) on ${serviceDate}.`,
+          description: `Vehicle double-booking detected, needs review: Vehicle ${conflict.vehicle_id} assigned to multiple routes (${conflict.routes}) on ${serviceDate}.`,
           trigger_evidence: {
+            conflict_type: 'VEHICLE',
             service_date: serviceDate,
             vehicle_id: conflict.vehicle_id,
+            assignment_count: conflict.count,
+            routes: conflict.routes.split(',')
+          }
+        })
+      );
+    }
+
+    // 2. Driver double-booking detection
+    const driverStmt = this.db.prepare(`
+      SELECT driver_id, COUNT(*) as count, GROUP_CONCAT(route_id) as routes
+      FROM daily_assignments
+      WHERE service_date = ?
+      GROUP BY driver_id
+      HAVING COUNT(*) > 1
+    `);
+    const driverConflicts = driverStmt.all(serviceDate) as {
+      driver_id: string;
+      count: number;
+      routes: string;
+    }[];
+
+    for (const conflict of driverConflicts) {
+      detected.push(
+        this.recordAnomaly({
+          service_run_id: null,
+          anomaly_id: 'ANOM-07',
+          severity: AnomalySeverity.HIGH,
+          description: `Driver assignment conflict needs review: Driver ${conflict.driver_id} assigned to multiple routes (${conflict.routes}) on ${serviceDate}.`,
+          trigger_evidence: {
+            conflict_type: 'DRIVER',
+            service_date: serviceDate,
+            driver_id: conflict.driver_id,
             assignment_count: conflict.count,
             routes: conflict.routes.split(',')
           }

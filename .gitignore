@@ -9,7 +9,7 @@ dist/
 dist-frontend/
 
 # Local SQLite databases and runtime data
-data/
+/data/
 *.db
 *.db-wal
 *.db-shm

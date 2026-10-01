@@ -19,6 +19,7 @@ import {
   X,
   ExternalLink
 } from 'lucide-react';
+import { useModalFocusTrap } from '../../hooks/useModalFocusTrap';
 
 export const CitizenPaymentsPage: React.FC = () => {
   const { t, formatCurrency, formatDate, formatTime } = useTranslation();
@@ -36,6 +37,15 @@ export const CitizenPaymentsPage: React.FC = () => {
   const [initiating, setInitiating] = useState(false);
   const [initiationResult, setInitiationResult] = useState<ResidentPayment | null>(null);
   const [initiationError, setInitiationError] = useState<string | null>(null);
+
+  const modalContainerRef = useModalFocusTrap({
+    isOpen: !!activeModalObligation,
+    onClose: () => {
+      setActiveModalObligation(null);
+      setInitiationResult(null);
+      setInitiationError(null);
+    }
+  });
 
   const householdId = session?.householdId;
 
@@ -353,6 +363,8 @@ export const CitizenPaymentsPage: React.FC = () => {
           }}
         >
           <div
+            ref={modalContainerRef}
+            tabIndex={-1}
             style={{
               backgroundColor: 'var(--color-surface)',
               borderRadius: 'var(--radius-md)',

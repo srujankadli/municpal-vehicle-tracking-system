@@ -322,6 +322,33 @@ export class PaymentService {
       throw new Error(`Payment record not found: ${params.paymentId}`);
     }
 
+    if (payment.status !== PaymentStatus.SUCCESSFUL) {
+      throw new Error(
+        `CANNOT_RECONCILE: Payment status is '${payment.status}'. Only confirmed payments with status '${PaymentStatus.SUCCESSFUL}' can be reconciled with bank statements.`
+      );
+    }
+
+    // Enforce 1:1 reconciliation integrity: check if payment_id or bank_statement_ref is already recorded
+    const existingRecStmt = this.db.prepare(`
+      SELECT id, payment_id, bank_statement_ref 
+      FROM payment_reconciliations 
+      WHERE payment_id = ? OR bank_statement_ref = ?
+      LIMIT 1
+    `);
+    const existingRec = existingRecStmt.get(params.paymentId, params.bankStatementRef) as {
+      id: string;
+      payment_id: string;
+      bank_statement_ref: string;
+    } | undefined;
+
+    if (existingRec) {
+      if (existingRec.payment_id === params.paymentId) {
+        throw new Error(`DUPLICATE_RECONCILIATION: Payment '${params.paymentId}' has already been reconciled (Reconciliation ID: ${existingRec.id}).`);
+      } else {
+        throw new Error(`DUPLICATE_BANK_STATEMENT_REF: Bank statement reference '${params.bankStatementRef}' has already been matched to another payment.`);
+      }
+    }
+
     const isMatch = params.statementAmountPaise === payment.amount_paise;
     const reconciliationStatus = isMatch ? ReconciliationStatus.MATCHED : ReconciliationStatus.UNMATCHED_AMOUNT;
     const paymentTargetStatus = isMatch ? PaymentStatus.RECONCILIATION_MATCHED : PaymentStatus.RECONCILIATION_MISMATCH;

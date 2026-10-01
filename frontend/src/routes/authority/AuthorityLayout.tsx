@@ -68,6 +68,16 @@ export const AuthorityLayout: React.FC = () => {
     }
   ];
 
+  const { user } = useAuth();
+  const isFinanceAuditor = user?.role === 'AUTHORITY' || user?.role === 'ADMIN';
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.to === '/authority/reconciliation' || item.to === '/authority/audit') {
+      return isFinanceAuditor;
+    }
+    return true;
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Sub-navigation bar for Authority Portal */}
@@ -81,7 +91,7 @@ export const AuthorityLayout: React.FC = () => {
           paddingBottom: '2px',
         }}
       >
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

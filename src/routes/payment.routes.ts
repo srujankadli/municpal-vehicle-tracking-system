@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { getDatabase } from '../db/connection.js';
-import { authenticate, requireRoles, enforceHouseholdAccess } from '../middleware/auth.middleware.js';
+import { authenticate, requireRoles, enforceFinanceAccess } from '../middleware/auth.middleware.js';
 import { UserRole, DataClassification } from '../types/domain.js';
 import { PaymentService } from '../services/payment.service.js';
 import { AuditService } from '../services/audit.service.js';
@@ -26,9 +26,9 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
   const paymentService = new PaymentService(db);
   const audit = new AuditService(db);
 
-  // GET /api/v1/finance/obligations/:household_id (Anti-IDOR)
+  // GET /api/v1/finance/obligations/:household_id (Restricted to Citizen or Authority/Admin)
   fastify.get('/obligations/:household_id', {
-    preHandler: [authenticate, enforceHouseholdAccess]
+    preHandler: [authenticate, enforceFinanceAccess]
   }, async (request, reply) => {
     const { household_id } = request.params as { household_id: string };
     const stmt = db.prepare(`
@@ -74,6 +74,14 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }
 
     const data = parseResult.data;
+
+    // Only citizens (for own household) or admins can initiate payment sessions
+    if (request.user!.role !== UserRole.CITIZEN && request.user!.role !== UserRole.ADMIN) {
+      return reply.status(403).send({
+        error: 'FORBIDDEN',
+        message: `Role '${request.user!.role}' is not authorized to initiate citizen payment sessions.`
+      });
+    }
 
     // Anti-IDOR for citizens
     if (request.user!.role === UserRole.CITIZEN) {
@@ -121,6 +129,15 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
     try {
       const result = paymentService.processProviderWebhook(rawPayload, signature);
+      audit.logEvent({
+        actorId: 'PROVIDER_GATEWAY',
+        actorRole: UserRole.ADMIN,
+        actionType: 'PAYMENT_WEBHOOK_STATUS',
+        entityName: 'resident_payments',
+        entityId: result.payment_id,
+        afterState: { status: result.status, message: result.message },
+        ipAddress: request.ip
+      });
       return reply.status(200).send(result);
     } catch (err: any) {
       return reply.status(400).send({
@@ -178,9 +195,9 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
     }
   });
 
-  // GET /api/v1/finance/payments/:household_id (Anti-IDOR)
+  // GET /api/v1/finance/payments/:household_id (Restricted to Citizen or Authority/Admin)
   fastify.get('/payments/:household_id', {
-    preHandler: [authenticate, enforceHouseholdAccess]
+    preHandler: [authenticate, enforceFinanceAccess]
   }, async (request, reply) => {
     const { household_id } = request.params as { household_id: string };
     const stmt = db.prepare(`

@@ -4,6 +4,7 @@ import { buildApp } from '../src/app.js';
 import { runSeed } from '../src/db/seed.js';
 import { AuthService } from '../src/services/auth.service.js';
 import { PaymentService } from '../src/services/payment.service.js';
+import { getDatabase } from '../src/db/connection.js';
 import { UserRole, DataClassification, EvidenceType, VerificationStatus } from '../src/types/domain.js';
 
 describe('Fastify API Endpoint Integration & Error Handling', () => {
@@ -181,14 +182,22 @@ describe('Fastify API Endpoint Integration & Error Handling', () => {
   });
 
   it('ADMIN reconciles payment against bank statement scroll', async () => {
-    // Reconcile pay-demo-101
+    // Ensure pay-demo-103 is confirmed successful before reconciling
+    const db = getDatabase();
+    db.prepare(`
+      UPDATE resident_payments 
+      SET status = 'SUCCESSFUL', confirmed_at = datetime('now') 
+      WHERE id = 'pay-demo-103'
+    `).run();
+
+    // Reconcile pay-demo-103
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/finance/reconcile',
       headers: { authorization: `Bearer ${adminToken}` },
       payload: {
-        payment_id: 'pay-demo-101',
-        bank_statement_ref: 'STMT-TEST-2026-001',
+        payment_id: 'pay-demo-103',
+        bank_statement_ref: 'STMT-TEST-2026-003',
         statement_amount_paise: 10000,
         notes: 'Verified against treasury scroll'
       }

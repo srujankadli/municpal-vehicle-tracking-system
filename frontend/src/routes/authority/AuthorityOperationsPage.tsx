@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n/I18nContext';
+import { useAuth } from '../../auth/AuthContext';
 import { apiClient } from '../../api/client';
 import { MetricCard } from '../../components/authority/MetricCard';
 import { AuthorityGeospatialMap } from '../../components/authority/AuthorityGeospatialMap';
@@ -34,6 +35,8 @@ import {
 
 export const AuthorityOperationsPage: React.FC = () => {
   const { t, locale } = useTranslation();
+  const { user } = useAuth();
+  const isAuthorityOrAdmin = user?.role === 'AUTHORITY' || user?.role === 'ADMIN';
 
   // State
   const [loading, setLoading] = useState<boolean>(true);
@@ -72,17 +75,13 @@ export const AuthorityOperationsPage: React.FC = () => {
         anomRes,
         compRes,
         vehRes,
-        routeRes,
-        foaRes,
-        crrRes
+        routeRes
       ] = await Promise.all([
         apiClient.get<{ assignments: DailyAssignment[] }>('/api/v1/operations/assignments'),
         apiClient.get<{ anomalies: OperationalAnomaly[] }>('/api/v1/anomalies'),
         apiClient.get<{ complaints: ComplaintRecord[] }>('/api/v1/complaints'),
         apiClient.get<{ vehicles: MasterVehicle[] }>('/api/v1/master/vehicles'),
-        apiClient.get<{ routes: MasterRoute[] }>('/api/v1/master/routes'),
-        apiClient.get<MetricResult>('/api/v1/metrics/fleet-availability?service_date=2026-09-14'),
-        apiClient.get<MetricResult>('/api/v1/metrics/collection-reconciliation?billing_period=2026-09')
+        apiClient.get<{ routes: MasterRoute[] }>('/api/v1/master/routes')
       ]);
 
       setAssignments(assignRes.assignments || []);
@@ -90,8 +89,25 @@ export const AuthorityOperationsPage: React.FC = () => {
       setComplaints(compRes.complaints || []);
       setVehicles(vehRes.vehicles || []);
       setRoutes(routeRes.routes || []);
-      setFoaMetric(foaRes || null);
-      setCrrMetric(crrRes || null);
+
+      // Fetch Authority/Admin metrics (FOA and CRR) only if authorized
+      if (isAuthorityOrAdmin) {
+        try {
+          const [foaRes, crrRes] = await Promise.all([
+            apiClient.get<MetricResult>('/api/v1/metrics/fleet-availability?service_date=2026-09-14'),
+            apiClient.get<MetricResult>('/api/v1/metrics/collection-reconciliation?billing_period=2026-09')
+          ]);
+          setFoaMetric(foaRes || null);
+          setCrrMetric(crrRes || null);
+        } catch (mErr) {
+          console.warn('Authority metrics fetch exception:', mErr);
+          setFoaMetric(null);
+          setCrrMetric(null);
+        }
+      } else {
+        setFoaMetric(null);
+        setCrrMetric(null);
+      }
 
       // Fetch route completion and service discrepancy for the active demo run
       const activeRun = 'run-demo-01';

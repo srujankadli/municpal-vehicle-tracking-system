@@ -66,9 +66,9 @@ export const CitizenServicePage: React.FC = () => {
 
       // 3. Query verification status for this household on the service date
       try {
-        // Query status from operations endpoint
+        // Query status dynamically via citizen service-status endpoint
         const statusRes = await apiClient.get<{ synthesis: ServiceSynthesis }>(
-          `/operations/runs/run-demo-01/households/${householdId}/status`
+          `/operations/citizen/service-status?service_date=${serviceDate}`
         );
         setSynthesis(statusRes.synthesis);
       } catch (err: any) {

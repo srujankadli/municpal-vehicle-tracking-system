@@ -86,7 +86,7 @@ export class ApiClient {
   public async request<T>(
     endpoint: string,
     options: {
-      method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+      method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
       body?: unknown;
       headers?: Record<string, string>;
       timeoutMs?: number;
@@ -166,6 +166,18 @@ export class ApiClient {
 
   public post<T>(endpoint: string, body?: unknown, options?: { headers?: Record<string, string>; timeoutMs?: number }): Promise<T> {
     return this.request<T>(endpoint, { method: 'POST', body, ...options });
+  }
+
+  public patch<T>(endpoint: string, body?: unknown, options?: { headers?: Record<string, string>; timeoutMs?: number }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'PATCH', body, ...options });
+  }
+
+  public put<T>(endpoint: string, body?: unknown, options?: { headers?: Record<string, string>; timeoutMs?: number }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'PUT', body, ...options });
+  }
+
+  public delete<T>(endpoint: string, options?: { headers?: Record<string, string>; timeoutMs?: number }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE', ...options });
   }
 }
 

@@ -19,6 +19,7 @@ import {
   Database,
   Download
 } from 'lucide-react';
+import { useModalFocusTrap } from '../../hooks/useModalFocusTrap';
 
 export const AuthorityAuditPage: React.FC = () => {
   const { t, locale } = useTranslation();
@@ -50,6 +51,11 @@ export const AuthorityAuditPage: React.FC = () => {
 
   // Selected event for state diff inspection drawer / modal
   const [selectedEvent, setSelectedEvent] = useState<AuditEventRow | null>(null);
+
+  const diffModalRef = useModalFocusTrap({
+    isOpen: !!selectedEvent,
+    onClose: () => setSelectedEvent(null)
+  });
 
   const fetchAuditEvents = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -611,6 +617,7 @@ export const AuthorityAuditPage: React.FC = () => {
       {/* Before/After State Inspection Modal Drawer */}
       {selectedEvent && (
         <div
+          ref={diffModalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="audit-diff-title"

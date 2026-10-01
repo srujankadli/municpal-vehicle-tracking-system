@@ -80,3 +80,41 @@ export async function enforceHouseholdAccess(request: FastifyRequest, reply: Fas
     }
   }
 }
+
+/**
+ * Enforces financial access boundary:
+ * - CITIZEN may only access their own registered household.
+ * - AUTHORITY and ADMIN may access any household.
+ * - WORKER, DRIVER, SUPERVISOR, and WARD_OFFICER are strictly rejected with HTTP 403.
+ */
+export async function enforceFinanceAccess(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!request.user) {
+    reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Authentication required.' });
+    return;
+  }
+
+  const params = request.params as { household_id?: string } | undefined;
+  const targetHouseholdId = params?.household_id;
+
+  if (request.user.role === UserRole.ADMIN || request.user.role === UserRole.AUTHORITY) {
+    return; // Full administrative access
+  }
+
+  if (request.user.role === UserRole.CITIZEN) {
+    if (!request.user.householdId || request.user.householdId !== targetHouseholdId) {
+      reply.status(403).send({
+        error: 'FORBIDDEN',
+        message: 'Anti-IDOR Violation: Citizens can only access their own registered household payment records.'
+      });
+      return;
+    }
+    return;
+  }
+
+  // All other roles (WORKER, DRIVER, SUPERVISOR, WARD_OFFICER) are blocked
+  reply.status(403).send({
+    error: 'FORBIDDEN',
+    message: `Role '${request.user.role}' is not authorized to access municipal financial or payment records.`
+  });
+}
+

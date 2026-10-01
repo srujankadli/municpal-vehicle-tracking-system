@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
+import { useModalFocusTrap } from '../../hooks/useModalFocusTrap';
 
 export const AuthorityReconciliationPage: React.FC = () => {
   const { t, locale } = useTranslation();
@@ -59,6 +60,14 @@ export const AuthorityReconciliationPage: React.FC = () => {
   const [notes, setNotes] = useState<string>('');
   const [submittingReconcile, setSubmittingReconcile] = useState<boolean>(false);
   const [reconcileFeedback, setReconcileFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const reconcileModalRef = useModalFocusTrap({
+    isOpen: !!reconcilingPayment,
+    onClose: () => {
+      setReconcilingPayment(null);
+      setReconcileFeedback(null);
+    }
+  });
 
   // Load households list and initial CRR metric
   const fetchInitialData = async () => {
@@ -498,6 +507,7 @@ export const AuthorityReconciliationPage: React.FC = () => {
       {/* Bank Reconciliation Modal */}
       {reconcilingPayment && (
         <div
+          ref={reconcileModalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="reconcile-modal-title"

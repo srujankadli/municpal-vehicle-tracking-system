@@ -50,8 +50,22 @@ export const App: React.FC = () => {
                   <Route path="verification" element={<AuthorityVerificationPage />} />
                   <Route path="anomalies" element={<AuthorityAnomaliesPage />} />
                   <Route path="complaints" element={<AuthorityComplaintsPage />} />
-                  <Route path="reconciliation" element={<AuthorityReconciliationPage />} />
-                  <Route path="audit" element={<AuthorityAuditPage />} />
+                  <Route
+                    path="reconciliation"
+                    element={
+                      <RouteGuard allowedRoles={['AUTHORITY', 'ADMIN']}>
+                        <AuthorityReconciliationPage />
+                      </RouteGuard>
+                    }
+                  />
+                  <Route
+                    path="audit"
+                    element={
+                      <RouteGuard allowedRoles={['AUTHORITY', 'ADMIN']}>
+                        <AuthorityAuditPage />
+                      </RouteGuard>
+                    }
+                  />
                 </Route>
 
                 {/* Field Worker Portal Boundary */}

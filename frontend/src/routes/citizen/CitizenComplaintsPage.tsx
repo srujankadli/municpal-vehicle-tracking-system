@@ -288,6 +288,9 @@ export const CitizenComplaintsPage: React.FC = () => {
                   <th style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
                     {t('portals.citizen.complaintStatus')}
                   </th>
+                  <th style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                    Resolution / Outcome
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -315,13 +318,35 @@ export const CitizenComplaintsPage: React.FC = () => {
                           fontWeight: 600,
                           padding: '2px 8px',
                           borderRadius: 'var(--radius-sm)',
-                          backgroundColor: 'rgba(234, 179, 8, 0.15)',
-                          color: '#b45309',
-                          border: '1px solid rgba(234, 179, 8, 0.3)',
+                          backgroundColor:
+                            c.status === 'RESOLVED'
+                              ? 'rgba(34, 197, 94, 0.15)'
+                              : c.status === 'DISMISSED'
+                              ? 'rgba(156, 163, 175, 0.15)'
+                              : 'rgba(234, 179, 8, 0.15)',
+                          color:
+                            c.status === 'RESOLVED'
+                              ? '#15803d'
+                              : c.status === 'DISMISSED'
+                              ? '#4b5563'
+                              : '#b45309',
+                          border:
+                            c.status === 'RESOLVED'
+                              ? '1px solid rgba(34, 197, 94, 0.3)'
+                              : c.status === 'DISMISSED'
+                              ? '1px solid rgba(156, 163, 175, 0.3)'
+                              : '1px solid rgba(234, 179, 8, 0.3)',
                         }}
                       >
                         {c.status}
                       </span>
+                    </td>
+                    <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>
+                      {c.resolution_notes ? (
+                        <span>{c.resolution_notes}</span>
+                      ) : (
+                        <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending supervisor review</span>
+                      )}
                     </td>
                   </tr>
                 ))}

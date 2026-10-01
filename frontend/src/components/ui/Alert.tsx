@@ -3,21 +3,27 @@ import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { useTranslation } from '../../i18n/I18nContext';
 
 export interface AlertProps {
-  type?: 'info' | 'warning' | 'danger' | 'success';
+  type?: 'info' | 'warning' | 'danger' | 'error' | 'success';
+  variant?: 'info' | 'warning' | 'danger' | 'error' | 'success';
   title?: string;
-  children: ReactNode;
+  message?: ReactNode;
+  children?: ReactNode;
   style?: React.CSSProperties;
+  className?: string;
 }
 
-export function Alert({ type = 'info', title, children, style }: AlertProps) {
+export function Alert({ type, variant, title, message, children, style, className }: AlertProps) {
   const { t } = useTranslation();
+
+  const rawType = variant || type || 'info';
+  const effectiveType = rawType === 'error' ? 'danger' : rawType;
 
   let icon = <Info size={18} aria-hidden="true" />;
   let color = 'var(--color-info)';
   let bg = 'var(--color-info-bg)';
   let border = 'var(--color-info-border)';
 
-  switch (type) {
+  switch (effectiveType) {
     case 'warning':
       icon = <AlertTriangle size={18} aria-hidden="true" />;
       color = 'var(--color-warning)';
@@ -38,10 +44,13 @@ export function Alert({ type = 'info', title, children, style }: AlertProps) {
       break;
   }
 
+  const content = children ?? message;
+
   return (
     <div
-      role={type === 'danger' || type === 'warning' ? 'alert' : 'status'}
+      role={effectiveType === 'danger' || effectiveType === 'warning' ? 'alert' : 'status'}
       aria-live="polite"
+      className={`alert alert-${effectiveType} ${className || ''}`.trim()}
       style={{
         display: 'flex',
         alignItems: 'flex-start',
@@ -65,7 +74,7 @@ export function Alert({ type = 'info', title, children, style }: AlertProps) {
             {t('a11y.errorNotification')}{title}
           </strong>
         )}
-        <div style={{ color: 'var(--color-text-secondary)', wordBreak: 'break-word' }}>{children}</div>
+        <div style={{ color: 'var(--color-text-secondary)', wordBreak: 'break-word' }}>{content}</div>
       </div>
     </div>
   );

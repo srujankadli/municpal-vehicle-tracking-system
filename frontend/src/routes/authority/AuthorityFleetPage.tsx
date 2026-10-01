@@ -42,13 +42,15 @@ export const AuthorityFleetPage: React.FC = () => {
 
     try {
       const today = new Date().toISOString().split('T')[0]!;
-      const [vehRes, foaRes] = await Promise.all([
-        apiClient.get<{ vehicles: MasterVehicle[] }>('/api/v1/master/vehicles'),
-        apiClient.get<MetricResult>(`/api/v1/metrics/fleet-availability?service_date=${today}`)
-      ]);
-
+      const vehRes = await apiClient.get<{ vehicles: MasterVehicle[] }>('/api/v1/master/vehicles');
       setVehicles(vehRes.vehicles || []);
-      setFoaMetric(foaRes || null);
+
+      try {
+        const foaRes = await apiClient.get<MetricResult>(`/api/v1/metrics/fleet-availability?service_date=${today}`);
+        setFoaMetric(foaRes || null);
+      } catch (fErr) {
+        setFoaMetric(null);
+      }
     } catch (err: any) {
       setError(err.message || t('errors.networkError'));
     } finally {
