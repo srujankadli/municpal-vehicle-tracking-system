@@ -1,0 +1,41 @@
+﻿services:
+  # Backend Fastify Web Service
+  - type: web
+    name: municipal-waste-backend
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build:backend
+    startCommand: npm start
+    healthCheckPath: /healthz
+    disk:
+      name: sqlite-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DB_CLIENT
+        value: sqlite
+      - key: DATABASE_PATH
+        value: /var/data/municipal_waste.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEBHOOK_HMAC_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+
+  # Frontend React SPA Static Site
+  - type: static
+    name: municipal-waste-frontend
+    buildCommand: npm ci && npm run build:frontend
+    staticPublishPath: dist-frontend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false

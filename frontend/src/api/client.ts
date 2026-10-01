@@ -33,7 +33,10 @@ export class ApiClient {
     tokenGetter?: () => string | null;
     onUnauthorized?: () => void;
   }) {
-    this.baseUrl = options?.baseUrl || '/api/v1';
+    const envBaseUrl = typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_BASE_URL
+      ? String((import.meta as any).env.VITE_API_BASE_URL).replace(/\/+$/, '')
+      : null;
+    this.baseUrl = options?.baseUrl || envBaseUrl || '/api/v1';
     this.tokenGetter = options?.tokenGetter || (() => {
       try {
         const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('municipal_session') : null;
