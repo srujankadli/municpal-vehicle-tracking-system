@@ -1,4 +1,4 @@
-﻿# Walkthrough — Final Comprehensive Security, Deployment, Session Integrity & Acceptance Audit
+# Walkthrough — Final Comprehensive Security, Deployment, Session Integrity & Acceptance Audit
 
 ## 1. Final Audit Status & Verdict
 
@@ -165,8 +165,18 @@ npm run build
 - **Root Anchored `.gitignore`**: Fixed `data/` globbing pattern to `/data/` so that runtime SQLite databases in the root directory remain excluded while `frontend/src/data/demoSpatialFixtures.ts` is tracked.
 - **Production Environment Configuration**: Formatted `.env.example` with standard development defaults and mandatory deployment instructions for SQLite persistent volume mounting (`/data`), strict JWT secret rotation, and production CORS configuration.
 - **System Documentation**: Generated complete production `README.md` documenting architecture, epistemic safety principles (`OBSERVED != VERIFIED`), canonical anomalies (ANOM-01 to ANOM-07), RBAC matrix, and complete deployment runbooks.
-- **Git Commit & Push**:
-  - Commit Hash: `88c6b65`
-  - Message: `chore: finalize production deployment readiness`
-  - Remote: `https://github.com/srujankadli/municpal-vehicle-tracking-system.git`
-  - Branch: `main` (Synchronized, clean working tree)
+- **Git Commits & Synchronization**:
+  - `88c6b65`: `chore: finalize production deployment readiness`
+  - `b3daf6a`: `docs: finalize production deployment walkthrough`
+  - `8600e9e`: `build(deploy): configure repository for Render deployment with persistent SQLite disk`
+- **Render Cloud Deployment Architecture**:
+  - Backend Web Service: Node 22+ with 1 GB persistent disk at `/var/data` (`DATABASE_PATH=/var/data/municipal_waste.db`), health check `/healthz`.
+  - Frontend Static Site: Vite SPA in `dist-frontend/` with rewrite rule `/*` -> `/index.html`.
+- **Strict Secure Deployment Sequence**:
+  1. Provision both services in Render (via `render.yaml` or dashboard).
+  2. Obtain the actual frontend Static Site HTTPS URL.
+  3. Set backend `CORS_ORIGIN` to the exact HTTPS frontend origin (never use `*` or leave blank).
+  4. Obtain the actual backend Web Service HTTPS URL.
+  5. Set frontend `VITE_API_BASE_URL` to the backend URL followed by `/api/v1`.
+  6. Trigger a manual redeploy (**Clear build cache & deploy**) on the frontend Static Site so Vite bakes the URL into the client bundle.
+

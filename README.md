@@ -205,6 +205,21 @@ npm run build
    node dist/index.js
    ```
 
+### Render Cloud Deployment:
+The repository includes a ready-to-use Render Blueprint (`render.yaml`) configuring two decoupled services:
+- **Backend API**: Render Web Service (`Starter` plan with 1 GB persistent disk mounted at `/var/data`, `DATABASE_PATH=/var/data/municipal_waste.db`, health check `/healthz`).
+- **Frontend SPA**: Render Static Site (`dist-frontend/`, rewrite rule `/*` -> `/index.html`).
+
+#### Secure Production Deployment Sequence:
+1. Provision both the backend Web Service and frontend Static Site in Render.
+2. Obtain the assigned frontend Static Site HTTPS URL (e.g. `https://municipal-waste-frontend.onrender.com`).
+3. Set the backend `CORS_ORIGIN` environment variable to the exact HTTPS frontend origin.
+   - *Security Rule*: Never use `CORS_ORIGIN=*` in production, even temporarily.
+   - *Security Rule*: Never leave production `CORS_ORIGIN` blank.
+4. Obtain the assigned backend Web Service HTTPS URL (e.g. `https://municipal-waste-backend.onrender.com`).
+5. Set `VITE_API_BASE_URL` in the frontend Static Site environment to the backend URL followed by `/api/v1` (e.g. `https://municipal-waste-backend.onrender.com/api/v1`).
+6. Trigger a frontend manual redeploy (**Clear build cache & deploy**), ensuring Vite embeds the production API base URL at build time.
+
 ---
 
 ## 8. Health Check Probes & Observability

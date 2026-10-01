@@ -1,4 +1,4 @@
-﻿services:
+services:
   # Backend Fastify Web Service
   - type: web
     name: municipal-waste-backend
@@ -24,6 +24,8 @@
         generateValue: true
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
+      # Set to the exact HTTPS frontend Static Site origin (e.g. https://municipal-waste-frontend.onrender.com).
+      # Never use '*' or leave blank in production.
       - key: CORS_ORIGIN
         sync: false
 
@@ -37,5 +39,8 @@
         source: /*
         destination: /index.html
     envVars:
+      # Set to the backend Web Service URL followed by /api/v1 (e.g. https://municipal-waste-backend.onrender.com/api/v1).
+      # Trigger a manual redeploy after setting this because Vite embeds it into the static bundle at build time.
       - key: VITE_API_BASE_URL
         sync: false
+

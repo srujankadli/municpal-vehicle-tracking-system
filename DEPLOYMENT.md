@@ -126,3 +126,32 @@ The production Dockerfile enforces standard enterprise security controls:
 3. **Frontend Asset Serving**:
    - The frontend is compiled to static production assets in dist-frontend/ via npm run build:frontend.
    - In production, these static files should be served via an edge CDN or a reverse proxy (e.g., NGINX / Caddy) configured with TLS termination and reverse-proxy routing to the backend /api and /healthz endpoints.
+
+---
+
+### 8. Render Cloud Deployment Architecture & Secure Setup Sequence
+
+The platform supports direct, zero-overhead deployment on Render using two services defined in `render.yaml`:
+1. **Backend Web Service** (`municipal-waste-backend`):
+   - Service Type: `Web Service` (Node 22+)
+   - Build Command: `npm ci && npm run build:backend`
+   - Start Command: `npm start` (automatically executes migrations on startup)
+   - Health Check Path: `/healthz`
+   - Persistent Disk: `sqlite-data` mounted at `/var/data` (1 GB+, Starter plan)
+   - Database Path: `DATABASE_PATH=/var/data/municipal_waste.db`
+2. **Frontend Static Site** (`municipal-waste-frontend`):
+   - Service Type: `Static Site`
+   - Build Command: `npm ci && npm run build:frontend`
+   - Publish Directory: `dist-frontend`
+   - Client-side Routing: Rewrite `/*` -> `/index.html`
+
+#### Strict Secure Deployment & Variable Configuration Sequence
+To maintain production security and eliminate open CORS wildcards:
+1. **Create and Provision Services**: Provision the backend Render Web Service and frontend Render Static Site (via `render.yaml` Blueprint or manual dashboard setup).
+2. **Obtain Frontend URL**: Retrieve the assigned HTTPS frontend Static Site URL (e.g., `https://municipal-waste-frontend.onrender.com`).
+3. **Configure Backend CORS**: Set the backend `CORS_ORIGIN` environment variable to the exact HTTPS frontend origin (`https://municipal-waste-frontend.onrender.com`).
+   - *Security Rule*: Never recommend or use `CORS_ORIGIN=*` in production, even temporarily.
+   - *Security Rule*: Never leave production `CORS_ORIGIN` blank when deployed as separate services.
+4. **Obtain Backend URL**: Retrieve the assigned HTTPS backend Web Service URL (e.g., `https://municipal-waste-backend.onrender.com`).
+5. **Configure Frontend API Base**: In the frontend Static Site environment settings, set `VITE_API_BASE_URL` to the exact backend URL followed by `/api/v1` (e.g., `https://municipal-waste-backend.onrender.com/api/v1`).
+6. **Trigger Frontend Redeploy**: Trigger a manual redeploy with **Clear build cache & deploy** on the frontend Static Site. This step is mandatory because Vite embeds `VITE_API_BASE_URL` into the compiled bundle at build time.
