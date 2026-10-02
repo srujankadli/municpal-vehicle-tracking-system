@@ -30,7 +30,8 @@ services:
         sync: false
 
   # Frontend React SPA Static Site
-  - type: static
+  - type: web
+    runtime: static
     name: municipal-waste-frontend
     buildCommand: npm ci && npm run build:frontend
     staticPublishPath: dist-frontend
